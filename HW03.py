@@ -2,6 +2,7 @@ import os, re
 from string import punctuation
 import numpy as np
 import json
+import operator
 from collections import Counter
 from pprint import pprint
 from nltk import sent_tokenize
@@ -34,7 +35,7 @@ for text in open('corpus_5000.txt').read().splitlines():
     norm_sents = [normalize(sent) for sent in sents]
     corpus += norm_sents
 
-vocabulary1 = {}
+vocabulary1 = {}  # словарь 1 из алгоритма Леши
 for sent in corpus:
     for word in sent:
         if word not in vocabulary1:
@@ -42,50 +43,43 @@ for sent in corpus:
         else:
             vocabulary1[word] += 1
 
-vocabulary2 = {}
+vocabulary2 = {}  #словарь 2 из алгоритма Леши
 for key in vocabulary1.keys():
     for sym in key:
         word_with_del = key.replace(sym, '')
-        vocabulary2[word_with_del] = key
+        if word_with_del in vocabulary2:
+            vocabulary2[word_with_del].append(key)
+        else:
+            vocabulary2[word_with_del] = [key]
 
 # bad = open('mistakes.txt').read().splitlines()
 # true = open('correct.txt').read().splitlines()
 
 wordforms = []
-
-
-def algoritm(word):
-    if word in vocabulary1:
-        return word
-    else:
-        for sym in word:
-            word_with_del = word.replace(sym, '')
-            wordforms.append(word_with_del)
-        return wordforms
-
-
 wordforms_keys = []
 
-
-def search_in_voc2(word):
-    for word in wordforms:
-        if word in vocabulary2:
-            wordforms_keys.append(word)
-
-
-def search_in_voc1(word):
-    for word in wordforms_keys:
-        lst = sorted(L)
-        biggest = lst[-1]
-        smallest = lst[0]
-        d = biggest - smallest
-        if word in vocabulary1:
-            print(max(vocabulary1.values()))
-        else:
-            print('Наверное, так слово и пишется')
+def algoritm(word):
+    if word in vocabulary1:  #если слово есть в словаре норм слов, возвращаем его
+        return word
+    else:  #иначе – удаляем по 1 символу
+        for sym in word:
+            word_with_del = word.replace(sym, '')
+            wordforms.append(word_with_del)  # добавляем полученные словоформы в список
+        for wordform in wordforms:
+            if wordform in vocabulary2:  # если полученные словоформы есть в словаре ошибок, то добавляем их в новый список
+                wordforms_keys.extend(vocabulary2[wordform])
+        print(wordforms_keys)
 
 
-search_in_voc1('сонце')
+algoritm('котка')
+#
+#
+# def choose_best_form(word): #это я пытаюсь реализовать "выбери ту форму, у которой freq выше"
+#     sorted_values = sorted(vocabulary1.items(), key=operator.itemgetter(1))
+#     for word in wordforms_keys:
+
+
+#choose_best_form('сомце')
 
 # WORDS = Counter()
 # for sent in corpus:
