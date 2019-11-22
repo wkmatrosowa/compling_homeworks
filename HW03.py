@@ -3,6 +3,7 @@ from string import punctuation
 import numpy as np
 import json
 import operator
+import textdistance
 from collections import Counter
 from pprint import pprint
 from nltk import sent_tokenize
@@ -35,60 +36,77 @@ for text in open('corpus_5000.txt').read().splitlines():
     norm_sents = [normalize(sent) for sent in sents]
     corpus += norm_sents
 
-vocabulary1 = {}  # словарь 1 из алгоритма Леши
+WORDS = Counter()
+for sent in corpus:
+    WORDS.update(sent)
+
+N = sum(WORDS.values())
+
+
+def P(word, N=N):
+    "Вычисляем вероятность слова"
+    return WORDS[word] / N
+
+
+vocabulary1 = {}
 for sent in corpus:
     for word in sent:
         if word not in vocabulary1:
-            vocabulary1[word] = 1
+            vocabulary1[word] = P(word)
         else:
             vocabulary1[word] += 1
 
-vocabulary2 = {}  #словарь 2 из алгоритма Леши
-for key in vocabulary1.keys():
-    for sym in key:
-        word_with_del = key.replace(sym, '')
-        if word_with_del in vocabulary2:
-            vocabulary2[word_with_del].append(key)
-        else:
-            vocabulary2[word_with_del] = [key]
+print(vocabulary1)[10:]
 
-# bad = open('mistakes.txt').read().splitlines()
-# true = open('correct.txt').read().splitlines()
-
-wordforms = []
-wordforms_keys = []
-
-def algoritm(word):
-    if word in vocabulary1:  #если слово есть в словаре норм слов, возвращаем его
-        return word
-    else:  #иначе – удаляем по 1 символу
-        for sym in word:
-            word_with_del = word.replace(sym, '')
-            wordforms.append(word_with_del)  # добавляем полученные словоформы в список
-        for wordform in wordforms:
-            if wordform in vocabulary2:  # если полученные словоформы есть в словаре ошибок, то добавляем их в новый список
-                wordforms_keys.extend(vocabulary2[wordform])
-        print(wordforms_keys)
-
-
-algoritm('котка')
-#
-#
-# def choose_best_form(word): #это я пытаюсь реализовать "выбери ту форму, у которой freq выше"
-#     sorted_values = sorted(vocabulary1.items(), key=operator.itemgetter(1))
-#     for word in wordforms_keys:
-
-
-#choose_best_form('сомце')
-
-# WORDS = Counter()
+# vocabulary1 = {}
 # for sent in corpus:
-#     WORDS.update(sent)
+#     for word in sent:
+#         if word not in vocabulary1:
+#             vocabulary1[word] = .P()
+#         else:
+#             vocabulary1[word] += 1
 #
-# N = sum(WORDS.values())
-# def P(word, N=N):
-#     "Вычисляем вероятность слова"
-#     return WORDS[word] / N
+# vocabulary2 = {}
+# for key in vocabulary1.keys():
+#     for sym in key:
+#         word_with_del = key.replace(sym, '')
+#         if word_with_del in vocabulary2:
+#             vocabulary2[word_with_del].append(key)
+#         else:
+#             vocabulary2[word_with_del] = [key]
+#
+# # bad = open('mistakes.txt').read().splitlines()
+# # true = open('correct.txt').read().splitlines()
+#
+# wordforms = []
+# wordforms_keys = []
+# candidates = {}
+# best_candidate = []
+#
+# def algoritm(word):
+#     if word in vocabulary1:  #если слово есть в словаре норм слов, возвращаем его
+#         return word
+#     else:  #иначе – удаляем по 1 символу
+#         for sym in word:
+#             word_with_del = word.replace(sym, '')
+#             wordforms.append(word_with_del)  # добавляем полученные словоформы в список
+#         for wordform in wordforms:
+#             if wordform in vocabulary2:  # если полученные словоформы есть в словаре ошибок, то добавляем их в новый список
+#                 wordforms_keys.extend(vocabulary2[wordform])
+#         for candidate in wordforms_keys: #проходимся по потенциальным кандидатам
+#             if candidate not in candidates: #если потенциальный кандидат не в списке кандидатов, то
+#                 candidates[candidate] = 1 #добавляем его в словарь кандидатов
+#             else:
+#                 candidates[candidate] += 1
+#         sorted_values = sorted(candidates.items(), key=operator.itemgetter(1), reverse=True)
+#         best_candidate.append(sorted_values)
+#         return best_candidate
+#
+#
+# algoritm('сомнце')
+
+
+
 #
 # def correction(word):
 #     "Находим наиболее вероятное похожее слово"
