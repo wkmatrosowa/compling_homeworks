@@ -1,13 +1,12 @@
 import pandas as pd
 from yargy import Parser, rule, or_
-from yargy.predicates import in_, in_caseless
-from yargy.tokenizer import MorphTokenizer
-from yargy.pipelines import morph_pipeline, caseless_pipeline
 from yargy.interpretation import fact
-from IPython.display import display
+from yargy.pipelines import morph_pipeline
 
 pd.set_option('display.max_colwidth', -1)
 data = pd.read_csv('pristavki.csv', header=None, names=['text'])
+
+
 # data.sample(n=1000)
 
 # Pristavka = fact(
@@ -23,33 +22,30 @@ data = pd.read_csv('pristavki.csv', header=None, names=['text'])
 #     morph_pipeline(['Slim', 'SuperSlim', 'слим']).interpretation(Pristavka.version).optional()
 #     )
 
-game = fact(
-    'Game',
-    ['name', 'version_number', 'version_name', 'console']
-)
+class ConsoleGame:
+    __game = fact(
+        'Game',
+        ['name', 'version_number', 'version_name', 'console']
+    )
 
-Until_Dawn = rule(
-    morph_pipeline(
-        ['Until Dawn', 'Until dawn', 'until down', 'Дожить До Рассвета', 'Дожить до рассвета']).interpretation(
-        game.name.const("Until Dawn")),
-    morph_pipeline(['PS4', 'Playstation 4', 'PlayStation4']).interpretation(game.console).optional(),
-)
+    def __init__(self, names: list = [], version_numbers: list = [], version_names: list = [], consoles: list = []):
+        rules = rule(morph_pipeline(names).interpretation(self.__game.name.const(names[0])),
+                     morph_pipeline(consoles).interpretation(self.__game.console).optional())
+        game = or_(rules).interpretation(self.__game)
+        self.parser = Parser(game)
 
-GAME = or_(Until_Dawn).interpretation(game)
+    def matches(self, data):
+        matches = []
 
-parser = Parser(GAME)
+        for sent in data.text[:1000]:
+            for match in self.parser.findall(sent):
+                matches.append(match.fact)
 
-matches = []
+        for m in matches:
+            print(m.name, m.console)
 
-for sent in data.text[:9000]:
-    for match in parser.findall(sent):
-        matches.append(match.fact)
 
-for m in matches:
-    print(m.name, m.console)
+until_dawn = ConsoleGame(names=['Until Dawn', 'Until dawn', 'until down', 'Дожить До Рассвета', 'Дожить до рассвета'],
+                         consoles=['PS4', 'Playstation 4', 'PlayStation4'])
 
-# amount_of_entities = 0
-#
-# amount_of_entities += 1
-#
-# print(amount_of_entities)
+until_dawn.matches(data)
